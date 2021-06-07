@@ -1,0 +1,14 @@
+application:
+  address: "localhost:8080"
+  readtimeout: 10
+  writetimeout: 600
+  static: "public"
+
+psql:
+  host: "localhost"
+  port: 5432
+  username: postgres
+  password: postgres
+  dbname: chitchat
+  querytimeout: 1s
+  healthcheck_interval: 5s

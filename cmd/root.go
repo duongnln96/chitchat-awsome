@@ -1,5 +1,56 @@
 package cmd
 
-func Execute() {
+import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
+	"github.com/chitchat-awsome/config"
+	"github.com/spf13/cobra"
+	"go.uber.org/zap"
+)
+
+var log *zap.SugaredLogger
+var globalContext context.Context
+
+var rootCmd = &cobra.Command{
+	Use: "",
+	Run: func(cmd *cobra.Command, args []string) {
+		appConfig := config.GetConfig()
+		log.Infof("Run application with config %+v", appConfig)
+
+		// TODO: Add server start
+	},
+}
+
+func init() {
+	prepareLogger()
+
+	osSignals := make(chan os.Signal, 1)
+	signal.Notify(osSignals, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		sig := <-osSignals
+		fmt.Println("Got os signal ", sig)
+		cancel()
+		os.Exit(0)
+	}()
+
+	globalContext = ctx
+}
+
+func prepareLogger() {
+	logger, _ := zap.NewDevelopment()
+	log = logger.Sugar()
+	log.Info("Log is prepared in development mode")
+}
+
+func Execute() {
+	if err := rootCmd.Execute(); err != nil {
+		log.Errorf("%s", err)
+		os.Exit(1)
+	}
 }
