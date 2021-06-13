@@ -11,13 +11,14 @@ import (
 
 type HandlerI interface{}
 
-type Handler struct {
+type HandlerServer struct {
 	Log    *zap.SugaredLogger
 	Ctx    context.Context
 	Config config.AppConfig
+	Psql   psqlconnector.PsqlClientI
 }
 
-type handerServer struct {
+type handlerServer struct {
 	log          *zap.SugaredLogger
 	ctx          context.Context
 	address      string
@@ -27,23 +28,22 @@ type handerServer struct {
 	psql         psqlconnector.PsqlClientI
 }
 
-func NewHandler(deps Handler) HandlerI {
-	psql := psqlconnector.NewPsqlClient(
-		psqlconnector.PsqlDeps{
-			Log:    deps.Log,
-			Ctx:    deps.Ctx,
-			Config: deps.Config.Psql,
-		},
-	)
-	psql.Start()
-
-	return &handerServer{
+func NewHandler(deps HandlerServer) HandlerI {
+	return &handlerServer{
 		log:          deps.Log,
 		ctx:          deps.Ctx,
 		address:      deps.Config.Server.Address,
 		readtimeout:  deps.Config.Server.ReadTimeout,
 		writetimeout: deps.Config.Server.WriteTimeout,
 		static:       deps.Config.Server.Static,
-		psql:         psql,
+		psql:         deps.Psql,
 	}
+}
+
+func (handler *handlerServer) StartServer() error {
+	return nil
+}
+
+func (handler *handlerServer) Routing() error {
+	return nil
 }

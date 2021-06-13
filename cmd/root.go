@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/chitchat-awsome/config"
+	"github.com/chitchat-awsome/pkg/psqlconnector"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -21,7 +22,19 @@ var rootCmd = &cobra.Command{
 		appConfig := config.GetConfig()
 		log.Infof("Run application with config %+v", appConfig)
 
-		// TODO: Add server start
+		// Start DB Connection
+		psql := psqlconnector.NewPsqlClient(
+			psqlconnector.PsqlDeps{
+				Log:    log,
+				Ctx:    globalContext,
+				Config: appConfig.Psql,
+			},
+		)
+		psql.Start()
+
+		// Data Handler init
+
+		// Server Handler Init
 	},
 }
 
