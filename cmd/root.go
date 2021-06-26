@@ -8,6 +8,8 @@ import (
 	"syscall"
 
 	"github.com/chitchat-awsome/config"
+	"github.com/chitchat-awsome/internal/data"
+	"github.com/chitchat-awsome/internal/handler"
 	"github.com/chitchat-awsome/pkg/psqlconnector"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -32,9 +34,25 @@ var rootCmd = &cobra.Command{
 		)
 		psql.Start()
 
-		// Data Handler init
+		// Data Handler
+		datahanler := data.NewDataHanler(
+			data.DataHandlerDeps{
+				Log: log,
+				Ctx: globalContext,
+				Db:  psql,
+			},
+		)
 
 		// Server Handler Init
+		server := handler.NewHandler(
+			handler.ServerDeps{
+				Log:         log,
+				Ctx:         globalContext,
+				Config:      appConfig.Server,
+				DataHandler: datahanler,
+			},
+		)
+		server.Start()
 	},
 }
 

@@ -2,48 +2,91 @@ package handler
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/chitchat-awsome/config"
-	"github.com/chitchat-awsome/pkg/psqlconnector"
+	"github.com/chitchat-awsome/internal/data"
 	"go.uber.org/zap"
 )
 
-type HandlerI interface{}
-
-type HandlerServer struct {
-	Log    *zap.SugaredLogger
-	Ctx    context.Context
-	Config config.AppConfig
-	Psql   psqlconnector.PsqlClientI
+type ServerI interface {
+	Start() error
+	Stop()
 }
 
-type handlerServer struct {
+type ServerDeps struct {
+	Log         *zap.SugaredLogger
+	Ctx         context.Context
+	Config      config.ServerConfig
+	DataHandler data.DataHandlerI
+}
+
+type server struct {
 	log          *zap.SugaredLogger
 	ctx          context.Context
 	address      string
 	readtimeout  time.Duration
 	writetimeout time.Duration
 	static       string
-	psql         psqlconnector.PsqlClientI
+	datahandler  data.DataHandlerI
 }
 
-func NewHandler(deps HandlerServer) HandlerI {
-	return &handlerServer{
+func NewHandler(deps ServerDeps) ServerI {
+	return &server{
 		log:          deps.Log,
 		ctx:          deps.Ctx,
-		address:      deps.Config.Server.Address,
-		readtimeout:  deps.Config.Server.ReadTimeout,
-		writetimeout: deps.Config.Server.WriteTimeout,
-		static:       deps.Config.Server.Static,
-		psql:         deps.Psql,
+		address:      deps.Config.Address,
+		readtimeout:  deps.Config.ReadTimeout,
+		writetimeout: deps.Config.WriteTimeout,
+		static:       deps.Config.Static,
+		datahandler:  deps.DataHandler,
 	}
 }
 
-func (handler *handlerServer) StartServer() error {
+func (s *server) Start() error {
+	mux := s.routingFunc()
+	// starting up the server
+	server := &http.Server{
+		Addr:           s.address,
+		Handler:        mux,
+		ReadTimeout:    time.Duration(int64(s.readtimeout) * int64(time.Second)),
+		WriteTimeout:   time.Duration(int64(s.writetimeout) * int64(time.Second)),
+		MaxHeaderBytes: 1 << 20,
+	}
+	err := server.ListenAndServe()
+	if err != nil {
+		s.log.Panicf("Cannot Start Server %+v\n", err)
+	}
 	return nil
 }
 
-func (handler *handlerServer) Routing() error {
-	return nil
+func (s *server) Stop() {
+
+}
+
+func (s *server) routingFunc() *http.ServeMux {
+	// handle static assets
+	mux := http.NewServeMux()
+	files := http.FileServer(http.Dir(s.static))
+	mux.Handle("/static/", http.StripPrefix("/static/", files))
+
+	//
+	// all route patterns matched here
+	// route handler functions defined in other files
+	//
+
+	// index
+	mux.HandleFunc("/", s.Index)
+	// error
+	mux.HandleFunc("/err", s.Error)
+
+	// defined in route_auth.go
+	mux.HandleFunc("/login", s.Login)
+	mux.HandleFunc("/logout", s.Logout)
+	mux.HandleFunc("/signup", s.Signup)
+	mux.HandleFunc("/signup_account", s.SignupUserAccount)
+	mux.HandleFunc("/authenticate", s.Authenticate)
+
+	return mux
 }
