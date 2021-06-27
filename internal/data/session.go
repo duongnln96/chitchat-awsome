@@ -22,6 +22,23 @@ func (d *dataHandler) CreateSession(user *User) (Session, error) {
 	return ssRet, err
 }
 
+func (d *dataHandler) GetSessionByUser(user *User) (Session, error) {
+	ss := Session{}
+	err := d.db.DBQueryRow(
+		func(r *sql.Row) error {
+			err := r.Scan(&ss.Id, &ss.Uuid)
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+		"SELECT id, uuid FROM sessions WHERE user_id = $1",
+		user.Id,
+	)
+
+	return ss, err
+}
+
 func (d *dataHandler) GetSessionByUUID(uuid string) (Session, error) {
 	ss := Session{}
 	err := d.db.DBQueryRow(

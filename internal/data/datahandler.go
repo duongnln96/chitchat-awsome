@@ -21,6 +21,7 @@ type DataHandlerI interface {
 
 	CreateSession(*User) (Session, error)
 	GetSessionByUUID(string) (Session, error)
+	GetSessionByUser(*User) (Session, error)
 	DeleteSessionByUUID(*Session) error
 
 	CreateThread(string, *User) (Thread, error)

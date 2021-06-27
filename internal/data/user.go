@@ -18,7 +18,7 @@ func (d *dataHandler) CreateUser(user *User) (User, error) {
 			return nil
 		},
 		"INSERT INTO users (uuid, name, email, password, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id, uuid, created_at",
-		utils.CreateUUID(), user.Name, utils.Encrypt(user.Password), time.Now(),
+		utils.CreateUUID(), user.Name, user.Email, utils.Encrypt(user.Password), time.Now(),
 	)
 
 	return userRet, err
@@ -28,7 +28,7 @@ func (d *dataHandler) GetUserByEmail(email string) (User, error) {
 	user := User{}
 	err := d.db.DBQueryRow(
 		func(r *sql.Row) error {
-			err := r.Scan(&user.Id, &user.Uuid, &user.Name, &user.Email, &user.Password, user.CreatedAt)
+			err := r.Scan(&user.Id, &user.Uuid, &user.Name, &user.Email, &user.Password, &user.CreatedAt)
 			if err != nil {
 				return err
 			}
