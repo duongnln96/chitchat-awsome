@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/chitchat-awsome/internal/utils"
@@ -33,6 +34,26 @@ func (thread *Thread) User() User {
 		thread.UserId,
 	)
 	return user
+}
+
+func (thread *Thread) Posts() []Post {
+	posts := make([]Post, 0)
+	psql.DBQueryRows(
+		func(rows *sql.Rows) bool {
+			post := Post{}
+			err := rows.Scan(&post.Id, &post.Uuid, &post.Body, &post.UserId, &post.ThreadId, &post.CreatedAt)
+			if err != nil {
+				return false
+			}
+			posts = append(posts, post)
+			return true
+		},
+		"SELECT id, uuid, body, user_id, thread_id, created_at FROM posts WHERE thread_id = $1",
+		thread.Id,
+	)
+
+	fmt.Printf("posts: %+v", posts)
+	return posts
 }
 
 func (thread *Thread) NumReplies() int {
