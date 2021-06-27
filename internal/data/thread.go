@@ -7,9 +7,53 @@ import (
 	"github.com/chitchat-awsome/internal/utils"
 )
 
+type Thread struct {
+	Id        int
+	Uuid      string
+	Topic     string
+	UserId    int
+	CreatedAt time.Time
+}
+
+func (thread *Thread) CreatedAtDate() string {
+	return thread.CreatedAt.Format("Jan 2, 2006 at 3:04pm")
+}
+
+func (thread *Thread) User() User {
+	user := User{}
+	psql.DBQueryRow(
+		func(r *sql.Row) error {
+			err := r.Scan(&user.Id, &user.Uuid, &user.Name, &user.Email, &user.CreatedAt)
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+		"SELECT id, uuid, name, email, created_at FROM users WHERE id = $1",
+		thread.UserId,
+	)
+	return user
+}
+
+func (thread *Thread) NumReplies() int {
+	var count int = 0
+	psql.DBQueryRows(
+		func(r *sql.Rows) bool {
+			err := r.Scan(&count)
+			if err != nil {
+				return false
+			}
+			return true
+		},
+		"SELECT count(*) FROM posts WHERE thread_id = $1",
+		thread.Id,
+	)
+	return count
+}
+
 func (d *dataHandler) CreateThread(topic string, user *User) (Thread, error) {
 	thread := Thread{}
-	err := d.db.DBQueryRow(
+	err := psql.DBQueryRow(
 		func(r *sql.Row) error {
 			err := r.Scan(&thread.Id, &thread.Uuid, &thread.Topic, &thread.UserId, &thread.CreatedAt)
 			if err != nil {
@@ -26,7 +70,7 @@ func (d *dataHandler) CreateThread(topic string, user *User) (Thread, error) {
 
 func (d *dataHandler) GetAllThreads() ([]Thread, error) {
 	threads := make([]Thread, 0)
-	err := d.db.DBQueryRows(
+	err := psql.DBQueryRows(
 		func(r *sql.Rows) bool {
 			thread := Thread{}
 			err := r.Scan(&thread.Id, &thread.Uuid, &thread.Topic, &thread.UserId, &thread.CreatedAt)
@@ -43,8 +87,25 @@ func (d *dataHandler) GetAllThreads() ([]Thread, error) {
 	return threads, err
 }
 
+func (d *dataHandler) GetThreadByUUID(uuid string) (Thread, error) {
+	thread := Thread{}
+	err := psql.DBQueryRow(
+		func(r *sql.Row) error {
+			err := r.Scan(&thread.Id, &thread.Uuid, &thread.Topic, &thread.UserId, &thread.CreatedAt)
+			if err != nil {
+				return err
+			}
+			return nil
+		},
+		"SELECT id, uuid, topic, user_id, created_at FROM threads WHERE uuid = $1",
+		uuid,
+	)
+
+	return thread, err
+}
+
 func (d *dataHandler) DeleteThread(thread Thread) error {
-	err := d.db.DBExec(
+	err := psql.DBExec(
 		"DELETE FROM threads WHERE id=$1",
 		thread.Id,
 	)

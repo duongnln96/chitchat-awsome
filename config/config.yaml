@@ -11,4 +11,4 @@ psql:
   password: postgres
   dbname: chitchat
   querytimeout: 1s
-  healthcheck_interval: 5s
+  healthcheck_interval: 30s

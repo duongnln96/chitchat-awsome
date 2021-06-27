@@ -5,9 +5,21 @@ import (
 	"time"
 )
 
+type Session struct {
+	Id        int
+	Uuid      string
+	Email     string
+	UserId    int
+	CreatedAt time.Time
+}
+
+func (ss *Session) CreatedAtDate() string {
+	return ss.CreatedAt.Format("Jan 2, 2006 at 3:04pm")
+}
+
 func (d *dataHandler) CreateSession(user *User) (Session, error) {
 	ssRet := Session{}
-	err := d.db.DBQueryRow(
+	err := psql.DBQueryRow(
 		func(r *sql.Row) error {
 			err := r.Scan(&ssRet.Id, &ssRet.Uuid, &ssRet.Email, &ssRet.UserId, &ssRet.CreatedAt)
 			if err != nil {
@@ -24,7 +36,7 @@ func (d *dataHandler) CreateSession(user *User) (Session, error) {
 
 func (d *dataHandler) GetSessionByUser(user *User) (Session, error) {
 	ss := Session{}
-	err := d.db.DBQueryRow(
+	err := psql.DBQueryRow(
 		func(r *sql.Row) error {
 			err := r.Scan(&ss.Id, &ss.Uuid)
 			if err != nil {
@@ -41,7 +53,7 @@ func (d *dataHandler) GetSessionByUser(user *User) (Session, error) {
 
 func (d *dataHandler) GetSessionByUUID(uuid string) (Session, error) {
 	ss := Session{}
-	err := d.db.DBQueryRow(
+	err := psql.DBQueryRow(
 		func(r *sql.Row) error {
 			err := r.Scan(&ss.Id, &ss.Uuid, &ss.Email, &ss.UserId, &ss.CreatedAt)
 			if err != nil {
@@ -56,7 +68,7 @@ func (d *dataHandler) GetSessionByUUID(uuid string) (Session, error) {
 }
 
 func (d *dataHandler) DeleteSessionByUUID(ss *Session) error {
-	err := d.db.DBExec(
+	err := psql.DBExec(
 		"DELETE FROM sessions WHERE uuid=$1",
 		ss.Uuid,
 	)

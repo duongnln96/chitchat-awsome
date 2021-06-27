@@ -3,14 +3,17 @@ package data
 import (
 	"context"
 
+	"github.com/chitchat-awsome/config"
 	"github.com/chitchat-awsome/pkg/psqlconnector"
 	"go.uber.org/zap"
 )
 
+var psql psqlconnector.PsqlClientI
+
 type DataHandlerDeps struct {
-	Log *zap.SugaredLogger
-	Ctx context.Context
-	Db  psqlconnector.PsqlClientI
+	Log    *zap.SugaredLogger
+	Ctx    context.Context
+	Config *config.AppConfig
 }
 
 type DataHandlerI interface {
@@ -26,19 +29,31 @@ type DataHandlerI interface {
 
 	CreateThread(string, *User) (Thread, error)
 	GetAllThreads() ([]Thread, error)
+	GetThreadByUUID(string) (Thread, error)
 	DeleteThread(Thread) error
+
+	CreatePost(*User, *Thread, string) (Post, error)
+	GetPostsIntoThread(Thread) ([]Post, error)
 }
 
 type dataHandler struct {
 	log *zap.SugaredLogger
 	ctx context.Context
-	db  psqlconnector.PsqlClientI
 }
 
 func NewDataHanler(deps DataHandlerDeps) DataHandlerI {
+	// Start DB Connection
+	psql = psqlconnector.NewPsqlClient(
+		psqlconnector.PsqlDeps{
+			Log:    deps.Log,
+			Ctx:    deps.Ctx,
+			Config: deps.Config.Psql,
+		},
+	)
+	psql.Start()
+
 	return &dataHandler{
 		log: deps.Log,
 		ctx: deps.Ctx,
-		db:  deps.Db,
 	}
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/chitchat-awsome/config"
 	"github.com/chitchat-awsome/internal/data"
 	"github.com/chitchat-awsome/internal/handler"
-	"github.com/chitchat-awsome/pkg/psqlconnector"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -24,25 +23,14 @@ var rootCmd = &cobra.Command{
 		appConfig := config.GetConfig()
 		log.Infof("Run application with config %+v", appConfig)
 
-		// Start DB Connection
-		psql := psqlconnector.NewPsqlClient(
-			psqlconnector.PsqlDeps{
-				Log:    log,
-				Ctx:    globalContext,
-				Config: appConfig.Psql,
-			},
-		)
-		psql.Start()
-
 		// Data Handler
 		datahanler := data.NewDataHanler(
 			data.DataHandlerDeps{
-				Log: log,
-				Ctx: globalContext,
-				Db:  psql,
+				Log:    log,
+				Ctx:    globalContext,
+				Config: appConfig,
 			},
 		)
-
 		// Server Handler Init
 		server := handler.NewHandler(
 			handler.ServerDeps{

@@ -7,9 +7,22 @@ import (
 	"github.com/chitchat-awsome/internal/utils"
 )
 
+type User struct {
+	Id        int
+	Uuid      string
+	Name      string
+	Email     string
+	Password  string
+	CreatedAt time.Time
+}
+
+func (usr *User) CreatedAtDate() string {
+	return usr.CreatedAt.Format("Jan 2, 2006 at 3:04pm")
+}
+
 func (d *dataHandler) CreateUser(user *User) (User, error) {
 	userRet := User{}
-	err := d.db.DBQueryRow(
+	err := psql.DBQueryRow(
 		func(r *sql.Row) error {
 			err := r.Scan(&userRet.Id, &userRet.Uuid, &userRet.CreatedAt)
 			if err != nil {
@@ -26,7 +39,7 @@ func (d *dataHandler) CreateUser(user *User) (User, error) {
 
 func (d *dataHandler) GetUserByEmail(email string) (User, error) {
 	user := User{}
-	err := d.db.DBQueryRow(
+	err := psql.DBQueryRow(
 		func(r *sql.Row) error {
 			err := r.Scan(&user.Id, &user.Uuid, &user.Name, &user.Email, &user.Password, &user.CreatedAt)
 			if err != nil {
@@ -43,7 +56,7 @@ func (d *dataHandler) GetUserByEmail(email string) (User, error) {
 
 func (d *dataHandler) GetUserByUUID(uuid string) (User, error) {
 	user := User{}
-	err := d.db.DBQueryRow(
+	err := psql.DBQueryRow(
 		func(r *sql.Row) error {
 			err := r.Scan(&user.Id, &user.Uuid, &user.Name, &user.Email, &user.Password, user.CreatedAt)
 			if err != nil {
@@ -60,7 +73,7 @@ func (d *dataHandler) GetUserByUUID(uuid string) (User, error) {
 
 func (d *dataHandler) GetUserBySession(ss *Session) (User, error) {
 	user := User{}
-	err := d.db.DBQueryRow(
+	err := psql.DBQueryRow(
 		func(r *sql.Row) error {
 			err := r.Scan(&user.Id, &user.Uuid, &user.Name, &user.Email, &user.CreatedAt)
 			if err != nil {

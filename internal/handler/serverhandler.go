@@ -81,12 +81,18 @@ func (s *server) routingFunc() *http.ServeMux {
 	// error
 	mux.HandleFunc("/err", s.Error)
 
-	// defined in route_auth.go
+	// defined in authhandler.go
 	mux.HandleFunc("/login", s.Login)
 	mux.HandleFunc("/logout", s.Logout)
 	mux.HandleFunc("/signup", s.Signup)
 	mux.HandleFunc("/signup_account", s.SignupUserAccount)
 	mux.HandleFunc("/authenticate", s.Authenticate)
+
+	// defined in threadhandler.go
+	mux.HandleFunc("/thread/new", s.NewThread)
+	mux.HandleFunc("/thread/create", s.CreateThread)
+	mux.HandleFunc("/thread/post", s.PostThread)
+	mux.HandleFunc("/thread/read", s.ReadThread)
 
 	return mux
 }

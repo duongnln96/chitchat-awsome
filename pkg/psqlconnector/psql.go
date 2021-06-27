@@ -74,7 +74,7 @@ func NewPsqlClient(deps PsqlDeps) PsqlClientI {
 
 func (pc *psqlClient) startHealthCheck() {
 	go func() {
-		ticker := time.NewTicker(5)
+		ticker := time.NewTicker(pc.healthcheckInterval)
 		for {
 			select {
 			case <-pc.stopChannel:
